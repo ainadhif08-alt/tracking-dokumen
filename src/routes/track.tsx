@@ -24,13 +24,13 @@ const empty = { nomor: "", pin: "", nama: "", wa: "", unit: "", lokasi: "", jeni
 function TrackPage() {
   const { submitReceipt } = useDts();
   const [f, setF] = useState(empty);
-  const [errs, setErrs] = useState<Record<string, string>>({});
+  const [errs, setErrs] = useState<Partial<Record<keyof typeof empty, string>>>({});
   const [state, setState] = useState<{ kind: "form" } | { kind: "ok"; judul: string } | { kind: "err" }>({ kind: "form" });
   const set = (k: keyof typeof empty, v: string) => setF((p) => ({ ...p, [k]: v }));
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    const n: Record<string, string> = {};
+    const n: Partial<Record<keyof typeof empty, string>> = {};
     if (!f.nomor.trim()) n.nomor = "Nomor tracking wajib diisi.";
     if (!/^\d{4,6}$/.test(f.pin)) n.pin = "PIN berupa 4–6 digit angka.";
     if (!f.nama.trim()) n.nama = "Nama wajib diisi.";

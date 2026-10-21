@@ -31,11 +31,11 @@ function NewDoc() {
   const [paraf, setParaf] = useState<Signer[]>([]);
   const [ttd, setTtd] = useState<Signer[]>([]);
   const [pin, setPin] = useState(randPin());
-  const [errs, setErrs] = useState<Record<string, string>>({});
+  const [errs, setErrs] = useState<Partial<Record<"judul" | "tenggat" | "rute" | "list" | "pin", string>>>({});
   const [created, setCreated] = useState<Doc | null>(null);
 
   const validate = () => {
-    const n: Record<string, string> = {};
+    const n: Partial<Record<"judul" | "tenggat" | "rute" | "list" | "pin", string>> = {};
     if (step === 0) {
       if (info.judul.trim().length < 5) n.judul = "Judul minimal 5 karakter.";
       if (!info.tenggat) n.tenggat = "Tenggat wajib diisi.";
