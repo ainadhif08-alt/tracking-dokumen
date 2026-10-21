@@ -8,3 +8,6 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+## Project rules
+- Frontend-only mockup: all document state lives in `src/lib/dts-store.tsx` (React context, resets on reload); business rules are pure functions in `src/lib/dts-data.ts` so they stay testable.
