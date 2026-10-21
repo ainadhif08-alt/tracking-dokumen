@@ -31,11 +31,11 @@ function NewDoc() {
   const [paraf, setParaf] = useState<Signer[]>([]);
   const [ttd, setTtd] = useState<Signer[]>([]);
   const [pin, setPin] = useState(randPin());
-  const [errs, setErrs] = useState<Record<string, string>>({});
+  const [errs, setErrs] = useState<Partial<Record<"judul" | "tenggat" | "rute" | "list" | "pin", string>>>({});
   const [created, setCreated] = useState<Doc | null>(null);
 
   const validate = () => {
-    const n: Record<string, string> = {};
+    const n: Partial<Record<"judul" | "tenggat" | "rute" | "list" | "pin", string>> = {};
     if (step === 0) {
       if (info.judul.trim().length < 5) n.judul = "Judul minimal 5 karakter.";
       if (!info.tenggat) n.tenggat = "Tenggat wajib diisi.";
@@ -156,7 +156,7 @@ function Item({ k, v }: { k: string; v: string }) {
   return <div className="rounded-xl bg-muted p-3"><dt className="text-xs text-muted-foreground">{k}</dt><dd className="font-medium break-words">{v}</dd></div>;
 }
 
-function SignerEditor({ title, list, setList, error }: { title: string; list: Signer[]; setList: (l: Signer[]) => void; error?: string }) {
+function SignerEditor({ title, list, setList, error }: { title: string; list: Signer[]; setList: (l: Signer[]) => void; error?: string | undefined }) {
   const upd = (id: string, k: "nama" | "jabatan", v: string) => setList(list.map((s) => (s.id === id ? { ...s, [k]: v } : s)));
   return (
     <div className="space-y-3">

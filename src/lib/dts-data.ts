@@ -6,7 +6,7 @@ export interface Signer {
   nama: string;
   jabatan: string;
   status: SignStatus;
-  waktu?: string;
+  waktu?: string | undefined;
 }
 
 export type ReceiptKind = "diterima" | "dikembalikan";
@@ -17,9 +17,9 @@ export interface Receipt {
   unit: string;
   lokasi: string;
   jenis: ReceiptKind;
-  catatan?: string;
+  catatan?: string | undefined;
   waktu: string;
-  void?: { alasan: string; waktu: string };
+  void?: { alasan: string; waktu: string } | undefined;
 }
 
 export interface Activity {
@@ -42,7 +42,7 @@ export interface Doc {
   pin: string;
   dibuat: string;
   lifecycle: DocLifecycle;
-  alasanBatal?: string;
+  alasanBatal?: string | undefined;
   paraf: Signer[];
   ttd: Signer[];
   penerimaan: Receipt[];

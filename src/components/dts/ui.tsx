@@ -128,7 +128,7 @@ export function Panel({ className, children }: { className?: string; children: R
 export const inputCls =
   "h-11 w-full rounded-xl border border-input bg-card px-3.5 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground";
 
-export function Field({ label, error, hint, children }: { label: string; error?: string; hint?: string; children: ReactNode }) {
+export function Field({ label, error, hint, children }: { label: string; error?: string | undefined; hint?: string | undefined; children: ReactNode }) {
   return (
     <label className="block">
       <span className="mb-1.5 block text-sm font-medium">{label}</span>

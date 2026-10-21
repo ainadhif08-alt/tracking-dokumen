@@ -37,7 +37,7 @@ function Dashboard() {
     const all = docs.flatMap((d) => d.penerimaan.filter((r) => !r.void));
     if (range === "minggu") {
       const days = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"];
-      return days.map((n, i) => ({ n, v: all.filter((r) => (new Date(r.waktu).getDay() + 6) % 7 === i).length + [1, 2, 1, 3, 2, 0, 0][i] }));
+      return days.map((n, i) => ({ n, v: all.filter((r) => (new Date(r.waktu).getDay() + 6) % 7 === i).length + ([1, 2, 1, 3, 2, 0, 0][i] ?? 0) }));
     }
     return ["Mei", "Jun", "Jul", "Agu", "Sep", "Okt"].map((n, i) => ({ n, v: [8, 12, 9, 15, 11, all.length + 4][i] }));
   }, [docs, range]);
@@ -107,18 +107,26 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* KPI cards with floating icon tiles */}
-        <div className="mt-10 grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-4">
-          {kpi.map(({ l, v, i: I, to }) => (
-            <Link key={l} to={to} className="relative rounded-2xl bg-card px-4 pb-4 pt-9 text-center shadow-card transition hover:-translate-y-0.5">
-              <div className="absolute -top-6 left-1/2 grid size-12 -translate-x-1/2 place-items-center rounded-2xl bg-hero text-primary-foreground shadow-soft"><I className="size-5" /></div>
-              <p className="text-2xl font-extrabold text-primary-hover">{v}</p>
-              <p className="text-xs font-medium text-muted-foreground">{l}</p>
-              <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted">
-                <div className="h-full rounded-full bg-success" style={{ width: `${docs.length ? (v / docs.length) * 100 : 0}%` }} />
-              </div>
-            </Link>
-          ))}
+        {/* Folder-shaped quick access cards */}
+        <h2 className="mb-4 mt-8 text-sm font-semibold uppercase tracking-wider">Akses cepat</h2>
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          {kpi.map(({ l, v, i: I, to }, idx) => {
+            const first = idx === 0;
+            return (
+              <Link key={l} to={to} className="group relative pt-4 transition hover:-translate-y-0.5">
+                <span className={cn("absolute right-0 top-0 h-6 w-1/2 rounded-t-2xl", first ? "bg-primary" : "bg-muted")} />
+                <div className={cn("relative rounded-2xl rounded-tr-none p-4", first ? "bg-primary text-primary-foreground shadow-soft" : "bg-muted")}>
+                  <p className={cn("text-[10px] font-bold uppercase tracking-wider", !first && "text-muted-foreground")}>Tahap</p>
+                  <div className="mt-3 flex items-center gap-2">
+                    <span className={cn("grid size-9 place-items-center rounded-full", first ? "glass" : "bg-card text-primary")}><I className="size-4" /></span>
+                    <span className={cn("text-2xl font-extrabold", !first && "text-primary-hover")}>{v}</span>
+                  </div>
+                  <p className={cn("mt-4 text-[10px] font-bold uppercase tracking-wider", !first && "text-muted-foreground")}>Dokumen</p>
+                  <p className={cn("truncate text-xs", first ? "opacity-90" : "text-primary")}>{l}</p>
+                </div>
+              </Link>
+            );
+          })}
         </div>
 
         <Panel className="mt-6">

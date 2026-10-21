@@ -20,9 +20,9 @@ export const Route = createFileRoute("/admin/pengaturan")({
 
 function Settings() {
   const [s, setS] = useState({ tim: "Tim RPA", wa: "081200001111", hari: "7", notif: true, ulang: false });
-  const [err, setErr] = useState<Record<string, string>>({});
+  const [err, setErr] = useState<Partial<Record<"tim" | "wa" | "hari", string>>>({});
   const save = () => {
-    const n: Record<string, string> = {};
+    const n: Partial<Record<"tim" | "wa" | "hari", string>> = {};
     if (!s.tim.trim()) n.tim = "Nama tim wajib diisi.";
     if (!/^(08|62)\d{8,12}$/.test(s.wa)) n.wa = "Nomor WA tidak valid.";
     if (!(Number(s.hari) >= 1)) n.hari = "Minimal 1 hari.";

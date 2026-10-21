@@ -52,7 +52,7 @@ function DocDetail() {
       <Tabs defaultValue="ringkasan">
         <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
           <TabsList className="h-12 rounded-2xl bg-card p-1 shadow-card">
-            {[["ringkasan", "Ringkasan"], ["posisi", "Posisi & Penerimaan"], ["paraf", "Paraf"], ["ttd", "TTD"], ["riwayat", "Riwayat"]].map(([v, l]) => (
+            {([["ringkasan", "Ringkasan"], ["posisi", "Posisi & Penerimaan"], ["paraf", "Paraf"], ["ttd", "TTD"], ["riwayat", "Riwayat"]] as const).map(([v, l]) => (
               <TabsTrigger key={v} value={v} className="h-10 rounded-xl px-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">{l}</TabsTrigger>
             ))}
           </TabsList>
