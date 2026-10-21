@@ -70,13 +70,13 @@ function Dashboard() {
                 <AreaChart data={chart} margin={{ top: 10, left: 0, right: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="var(--primary-foreground)" stopOpacity={0.45} />
-                      <stop offset="100%" stopColor="var(--primary-foreground)" stopOpacity={0} />
+                      <stop offset="0%" stopColor="currentColor" stopOpacity={0.45} />
+                      <stop offset="100%" stopColor="currentColor" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <XAxis dataKey="n" axisLine={false} tickLine={false} tick={{ fill: "var(--primary-foreground)", fontSize: 11, opacity: 0.8 }} />
+                  <XAxis dataKey="n" axisLine={false} tickLine={false} tick={{ fill: "currentColor", fontSize: 11, opacity: 0.8 }} />
                   <Tooltip contentStyle={{ borderRadius: 12, border: "none", color: "var(--foreground)" }} formatter={(v) => [`${v} penerimaan`, ""]} />
-                  <Area type="monotone" dataKey="v" stroke="var(--primary-foreground)" strokeWidth={2.5} fill="url(#g)" />
+                  <Area type="monotone" dataKey="v" stroke="currentColor" strokeWidth={2.5} fill="url(#g)" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>

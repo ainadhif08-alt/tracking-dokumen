@@ -42,7 +42,7 @@ function DocDetail() {
             <h1 className="mt-1 text-xl font-bold sm:text-2xl">{doc.judul}</h1>
             <div className="mt-3 rounded-full bg-card/95 p-0.5 w-fit"><StageBadge doc={doc} /></div>
           </div>
-          <div className="flex flex-wrap gap-2 [&_button]:bg-card">
+          <div className="flex flex-wrap gap-2">
             <CancelDocButton doc={doc} />
             <FinishDocButton doc={doc} />
           </div>
