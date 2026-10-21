@@ -11,7 +11,7 @@ describe("DTS rules", () => {
 
   it("void penerimaan terakhir mengembalikan posisi ke sebelumnya", () => {
     const d = clone("d1");
-    d.penerimaan[1].void = { alasan: "salah", waktu: "2026-10-18T00:00:00" };
+    d.penerimaan[1]!.void = { alasan: "salah", waktu: "2026-10-18T00:00:00" };
     expect(lastPosition(d)?.nama).toBe("Rina Marlina");
   });
 

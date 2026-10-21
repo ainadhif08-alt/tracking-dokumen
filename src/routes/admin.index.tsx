@@ -37,7 +37,7 @@ function Dashboard() {
     const all = docs.flatMap((d) => d.penerimaan.filter((r) => !r.void));
     if (range === "minggu") {
       const days = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"];
-      return days.map((n, i) => ({ n, v: all.filter((r) => (new Date(r.waktu).getDay() + 6) % 7 === i).length + [1, 2, 1, 3, 2, 0, 0][i] }));
+      return days.map((n, i) => ({ n, v: all.filter((r) => (new Date(r.waktu).getDay() + 6) % 7 === i).length + ([1, 2, 1, 3, 2, 0, 0][i] ?? 0) }));
     }
     return ["Mei", "Jun", "Jul", "Agu", "Sep", "Okt"].map((n, i) => ({ n, v: [8, 12, 9, 15, 11, all.length + 4][i] }));
   }, [docs, range]);
