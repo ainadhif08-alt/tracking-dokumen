@@ -10,33 +10,169 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as TrackRouteImport } from './routes/track'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminParafRouteImport } from './routes/admin.paraf'
+import { Route as AdminPenerimaanRouteImport } from './routes/admin.penerimaan'
+import { Route as AdminPengaturanRouteImport } from './routes/admin.pengaturan'
+import { Route as AdminQrRouteImport } from './routes/admin.qr'
+import { Route as AdminTtdRouteImport } from './routes/admin.ttd'
+import { Route as AdminDokumenIndexRouteImport } from './routes/admin.dokumen.index'
+import { Route as AdminDokumenIdRouteImport } from './routes/admin.dokumen.$id'
+import { Route as AdminDokumenBaruRouteImport } from './routes/admin.dokumen.baru'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrackRoute = TrackRouteImport.update({
+  id: '/track',
+  path: '/track',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminParafRoute = AdminParafRouteImport.update({
+  id: '/paraf',
+  path: '/paraf',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminPenerimaanRoute = AdminPenerimaanRouteImport.update({
+  id: '/penerimaan',
+  path: '/penerimaan',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminPengaturanRoute = AdminPengaturanRouteImport.update({
+  id: '/pengaturan',
+  path: '/pengaturan',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminQrRoute = AdminQrRouteImport.update({
+  id: '/qr',
+  path: '/qr',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminTtdRoute = AdminTtdRouteImport.update({
+  id: '/ttd',
+  path: '/ttd',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminDokumenIndexRoute = AdminDokumenIndexRouteImport.update({
+  id: '/dokumen/',
+  path: '/dokumen/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminDokumenIdRoute = AdminDokumenIdRouteImport.update({
+  id: '/dokumen/$id',
+  path: '/dokumen/$id',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminDokumenBaruRoute = AdminDokumenBaruRouteImport.update({
+  id: '/dokumen/baru',
+  path: '/dokumen/baru',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/track': typeof TrackRoute
+  '/admin/paraf': typeof AdminParafRoute
+  '/admin/penerimaan': typeof AdminPenerimaanRoute
+  '/admin/pengaturan': typeof AdminPengaturanRoute
+  '/admin/qr': typeof AdminQrRoute
+  '/admin/ttd': typeof AdminTtdRoute
+  '/admin/': typeof AdminIndexRoute
+  '/admin/dokumen/$id': typeof AdminDokumenIdRoute
+  '/admin/dokumen/baru': typeof AdminDokumenBaruRoute
+  '/admin/dokumen/': typeof AdminDokumenIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/track': typeof TrackRoute
+  '/admin/paraf': typeof AdminParafRoute
+  '/admin/penerimaan': typeof AdminPenerimaanRoute
+  '/admin/pengaturan': typeof AdminPengaturanRoute
+  '/admin/qr': typeof AdminQrRoute
+  '/admin/ttd': typeof AdminTtdRoute
+  '/admin': typeof AdminIndexRoute
+  '/admin/dokumen/$id': typeof AdminDokumenIdRoute
+  '/admin/dokumen/baru': typeof AdminDokumenBaruRoute
+  '/admin/dokumen': typeof AdminDokumenIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/track': typeof TrackRoute
+  '/admin/paraf': typeof AdminParafRoute
+  '/admin/penerimaan': typeof AdminPenerimaanRoute
+  '/admin/pengaturan': typeof AdminPengaturanRoute
+  '/admin/qr': typeof AdminQrRoute
+  '/admin/ttd': typeof AdminTtdRoute
+  '/admin/': typeof AdminIndexRoute
+  '/admin/dokumen/$id': typeof AdminDokumenIdRoute
+  '/admin/dokumen/baru': typeof AdminDokumenBaruRoute
+  '/admin/dokumen/': typeof AdminDokumenIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/track'
+    | '/admin/paraf'
+    | '/admin/penerimaan'
+    | '/admin/pengaturan'
+    | '/admin/qr'
+    | '/admin/ttd'
+    | '/admin/'
+    | '/admin/dokumen/$id'
+    | '/admin/dokumen/baru'
+    | '/admin/dokumen/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/track'
+    | '/admin/paraf'
+    | '/admin/penerimaan'
+    | '/admin/pengaturan'
+    | '/admin/qr'
+    | '/admin/ttd'
+    | '/admin'
+    | '/admin/dokumen/$id'
+    | '/admin/dokumen/baru'
+    | '/admin/dokumen'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/track'
+    | '/admin/paraf'
+    | '/admin/penerimaan'
+    | '/admin/pengaturan'
+    | '/admin/qr'
+    | '/admin/ttd'
+    | '/admin/'
+    | '/admin/dokumen/$id'
+    | '/admin/dokumen/baru'
+    | '/admin/dokumen/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
+  TrackRoute: typeof TrackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +184,116 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/track': {
+      id: '/track'
+      path: '/track'
+      fullPath: '/track'
+      preLoaderRoute: typeof TrackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/paraf': {
+      id: '/admin/paraf'
+      path: '/paraf'
+      fullPath: '/admin/paraf'
+      preLoaderRoute: typeof AdminParafRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/penerimaan': {
+      id: '/admin/penerimaan'
+      path: '/penerimaan'
+      fullPath: '/admin/penerimaan'
+      preLoaderRoute: typeof AdminPenerimaanRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/pengaturan': {
+      id: '/admin/pengaturan'
+      path: '/pengaturan'
+      fullPath: '/admin/pengaturan'
+      preLoaderRoute: typeof AdminPengaturanRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/qr': {
+      id: '/admin/qr'
+      path: '/qr'
+      fullPath: '/admin/qr'
+      preLoaderRoute: typeof AdminQrRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/ttd': {
+      id: '/admin/ttd'
+      path: '/ttd'
+      fullPath: '/admin/ttd'
+      preLoaderRoute: typeof AdminTtdRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/dokumen/': {
+      id: '/admin/dokumen/'
+      path: '/dokumen'
+      fullPath: '/admin/dokumen/'
+      preLoaderRoute: typeof AdminDokumenIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/dokumen/$id': {
+      id: '/admin/dokumen/$id'
+      path: '/dokumen/$id'
+      fullPath: '/admin/dokumen/$id'
+      preLoaderRoute: typeof AdminDokumenIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/dokumen/baru': {
+      id: '/admin/dokumen/baru'
+      path: '/dokumen/baru'
+      fullPath: '/admin/dokumen/baru'
+      preLoaderRoute: typeof AdminDokumenBaruRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
+interface AdminRouteChildren {
+  AdminParafRoute: typeof AdminParafRoute
+  AdminPenerimaanRoute: typeof AdminPenerimaanRoute
+  AdminPengaturanRoute: typeof AdminPengaturanRoute
+  AdminQrRoute: typeof AdminQrRoute
+  AdminTtdRoute: typeof AdminTtdRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+  AdminDokumenIdRoute: typeof AdminDokumenIdRoute
+  AdminDokumenBaruRoute: typeof AdminDokumenBaruRoute
+  AdminDokumenIndexRoute: typeof AdminDokumenIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminParafRoute: AdminParafRoute,
+  AdminPenerimaanRoute: AdminPenerimaanRoute,
+  AdminPengaturanRoute: AdminPengaturanRoute,
+  AdminQrRoute: AdminQrRoute,
+  AdminTtdRoute: AdminTtdRoute,
+  AdminIndexRoute: AdminIndexRoute,
+  AdminDokumenIdRoute: AdminDokumenIdRoute,
+  AdminDokumenBaruRoute: AdminDokumenBaruRoute,
+  AdminDokumenIndexRoute: AdminDokumenIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
+  TrackRoute: TrackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
