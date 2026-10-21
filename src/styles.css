@@ -15,6 +15,7 @@
   --radius-4xl: calc(var(--radius) + 16px);
   --color-background: var(--background);
   --color-canvas: var(--canvas);
+  --color-brand-canvas: var(--brand-canvas);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
@@ -64,6 +65,7 @@
   --radius: 0.75rem;
   /* page canvas behind the floating app frame */
   --canvas: oklch(0.93 0.018 255);
+  --brand-canvas: oklch(0.52 0.16 258);
   --background: oklch(0.976 0.005 260); /* #f5f7fb */
   --foreground: oklch(0.22 0.01 255); /* #181c21 */
   --card: oklch(1 0 0);
