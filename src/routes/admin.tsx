@@ -12,6 +12,7 @@ import {
   Plus,
   Menu,
   Bell,
+  Search,
 } from "lucide-react";
 import { Logos, DemoTag } from "@/components/dts/ui";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
