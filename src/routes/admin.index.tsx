@@ -76,7 +76,7 @@ function Dashboard() {
                   </defs>
                   <XAxis dataKey="n" axisLine={false} tickLine={false} tick={{ fill: "currentColor", fontSize: 11, opacity: 0.8 }} />
                   <Tooltip contentStyle={{ borderRadius: 12, border: "none", color: "var(--foreground)" }} formatter={(v) => [`${v} penerimaan`, ""]} />
-                  <Area type="monotone" dataKey="v" stroke="currentColor" strokeWidth={2.5} fill="url(#g)" />
+                  <Area type="monotone" dataKey="v" stroke="currentColor" strokeWidth={2.5} fill="url(#g)" isAnimationActive={false} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
