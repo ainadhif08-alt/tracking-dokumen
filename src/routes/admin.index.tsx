@@ -65,7 +65,7 @@ function Dashboard() {
                 <option value="bulan">Bulanan</option>
               </select>
             </div>
-            <div className="mt-3 h-36">
+            <div className="mt-3 h-36 text-primary-foreground">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chart} margin={{ top: 10, left: 0, right: 0, bottom: 0 }}>
                   <defs>
