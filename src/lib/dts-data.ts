@@ -17,7 +17,7 @@ export interface Receipt {
   unit: string;
   lokasi: string;
   jenis: ReceiptKind;
-  catatan?: string | undefined;
+  catatan: string;
   waktu: string;
   void?: { alasan: string; waktu: string } | undefined;
 }
@@ -26,7 +26,7 @@ export interface Activity {
   id: string;
   waktu: string;
   teks: string;
-  tipe: "buat" | "terima" | "paraf" | "ttd" | "void" | "selesai" | "batal";
+  tipe: "buat" | "terima" | "paraf" | "ttd" | "void" | "selesai" | "batal" | "edit";
 }
 
 export type DocLifecycle = "aktif" | "selesai" | "batal";
@@ -86,19 +86,56 @@ export const stageOf = (d: Doc): Stage => {
   if (validReceipts(d).length === 0) return "Menunggu Penerimaan";
   if (!isComplete(d.paraf)) return "Proses Paraf";
   if (!isComplete(d.ttd)) return "Proses TTD";
-  if (!hasReturn(d)) return "Menunggu Pengembalian";
   return "Siap Diselesaikan";
 };
 
-export const isLate = (d: Doc) => d.lifecycle === "aktif" && d.tenggat < TODAY;
+export const isLate = (d: Doc) => d.lifecycle === "aktif" && !!d.tenggat && d.tenggat < TODAY;
 
 /** Daftar kekurangan sebelum dokumen boleh diselesaikan. Kosong = boleh. */
 export const completionGaps = (d: Doc): string[] => {
   const gaps: string[] = [];
   d.paraf.filter((s) => s.status !== "selesai").forEach((s) => gaps.push(`Paraf belum selesai: ${s.nama} (${s.jabatan})`));
   d.ttd.filter((s) => s.status !== "selesai").forEach((s) => gaps.push(`TTD belum selesai: ${s.nama} (${s.jabatan})`));
-  if (!hasReturn(d)) gaps.push("Belum ada penerimaan pengembalian ke Tim RPA");
+  if (!validReceipts(d).length) gaps.push("Belum ada catatan penerimaan dokumen");
   return gaps;
+};
+
+export type ReceiptInput = Pick<Receipt, "nama" | "wa" | "unit" | "lokasi" | "jenis" | "catatan">;
+export const receiptErrors = (rc: ReceiptInput): Partial<Record<keyof ReceiptInput, string>> => {
+  const errors: Partial<Record<keyof ReceiptInput, string>> = {};
+  if (!rc.nama.trim()) errors.nama = "Nama penerima wajib diisi.";
+  if (!/^\+?\d[\d\s()-]{7,18}$/.test(rc.wa.trim())) errors.wa = "Nomor telepon tidak valid.";
+  if (!rc.unit.trim()) errors.unit = "Nama tim penerima wajib diisi.";
+  if (!rc.lokasi.trim()) errors.lokasi = "Lokasi penerimaan wajib diisi.";
+  if (!rc.catatan.trim()) errors.catatan = "Deskripsi penerimaan wajib diisi.";
+  return errors;
+};
+export const documentErrors = (judul: string, tim: string, paraf: Signer[], ttd: Signer[]) => {
+  const errors: { judul?: string; tim?: string; list?: string } = {};
+  if (!judul.trim()) errors.judul = "Judul dokumen wajib diisi.";
+  if (!tim.trim()) errors.tim = "Nama tim wajib diisi.";
+  if ([...paraf, ...ttd].some((s) => !s.nama.trim())) errors.list = "Lengkapi nama pihak atau hapus baris kosong.";
+  return errors;
+};
+export const trackingPath = (nomor: string) => `/track?doc=${encodeURIComponent(nomor)}`;
+export const unlockDocument = (docs: Doc[], nomor: string, pin: string) =>
+  docs.find((d) => d.nomor.toLowerCase() === nomor.trim().toLowerCase() && d.pin === pin.trim());
+export const appendReceipt = (doc: Doc, input: ReceiptInput, waktu: string): Doc => {
+  if (Object.keys(receiptErrors(input)).length || doc.lifecycle === "batal") return doc;
+  const receipt: Receipt = { ...input, id: uid(), waktu };
+  return { ...doc, penerimaan: [...doc.penerimaan, receipt], aktivitas: [
+    { id: uid(), waktu, teks: `Diterima oleh ${input.nama} — ${input.wa}, ${input.unit}, ${input.lokasi}. ${input.catatan}`, tipe: "terima" },
+    ...doc.aktivitas,
+  ] };
+};
+export const replaceSigners = (doc: Doc, kind: "paraf" | "ttd", list: Signer[], waktu: string): Doc => {
+  if (list.some((s) => !s.nama.trim()) || doc.lifecycle === "batal") return doc;
+  const updated = list.map((s) => {
+    const existing = doc[kind].find((p) => p.id === s.id);
+    return { ...s, nama: s.nama.trim(), jabatan: s.jabatan.trim(), status: existing?.status ?? "belum", waktu: existing?.waktu };
+  });
+  const describe = (items: Signer[]) => items.map((s) => `${s.nama} (${s.jabatan || "—"}; ${s.status}${s.waktu ? `; ${s.waktu}` : ""})`).join(", ") || "kosong";
+  return { ...doc, [kind]: updated, aktivitas: [{ id: uid(), waktu, teks: `Daftar ${kind === "paraf" ? "paraf" : "TTD"} diperbarui. Sebelumnya: ${describe(doc[kind])}. Sekarang: ${describe(updated)}.`, tipe: "edit" }, ...doc.aktivitas] };
 };
 
 export const fmtDate = (iso: string) =>
@@ -130,7 +167,7 @@ const r = (
   waktu: string,
   jenis: ReceiptKind = "diterima",
   extra: Partial<Receipt> = {},
-): Receipt => ({ id: uid(), nama, wa: "0812" + Math.floor(10000000 + Math.random() * 89999999), unit, lokasi, waktu, jenis, ...extra });
+): Receipt => ({ id: uid(), nama, wa: "0812" + Math.floor(10000000 + Math.random() * 89999999), unit, lokasi, catatan: "Dokumen fisik diterima untuk diteruskan ke pihak terkait.", waktu, jenis, ...extra });
 
 export const SEED: Doc[] = [
   {

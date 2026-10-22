@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
-import { SEED, uid, completionGaps, type Doc, type Receipt, type Activity } from "./dts-data";
+import { SEED, uid, completionGaps, appendReceipt, replaceSigners, unlockDocument, receiptErrors, type Doc, type ReceiptInput, type Signer, type Activity } from "./dts-data";
 
-const nowIso = () => new Date().toISOString().slice(0, 19);
+const nowIso = () => new Date().toISOString();
 
 interface Store {
   docs: Doc[];
@@ -10,10 +10,11 @@ interface Store {
   getDoc: (id: string) => Doc | undefined;
   addDoc: (d: Omit<Doc, "id" | "nomor" | "dibuat" | "aktivitas" | "penerimaan" | "lifecycle">) => Doc;
   markSign: (docId: string, kind: "paraf" | "ttd", signerId: string) => void;
+  updateSigners: (docId: string, kind: "paraf" | "ttd", list: Signer[]) => void;
   voidReceipt: (docId: string, receiptId: string, alasan: string) => void;
   cancelDoc: (docId: string, alasan: string) => void;
   finishDoc: (docId: string) => string[];
-  submitReceipt: (nomor: string, pin: string, rc: Omit<Receipt, "id" | "waktu">) => Doc | null;
+  submitReceipt: (nomor: string, pin: string, rc: ReceiptInput) => Doc | null;
 }
 
 const Ctx = createContext<Store | null>(null);
@@ -51,12 +52,14 @@ export function DtsProvider({ children }: { children: ReactNode }) {
     markSign: (docId, kind, signerId) =>
       update(docId, (d) => {
         const signer = d[kind].find((s) => s.id === signerId);
+        if (!signer || signer.status === "selesai" || d.lifecycle === "batal") return d;
         return {
           ...d,
           [kind]: d[kind].map((s) => (s.id === signerId ? { ...s, status: "selesai", waktu: nowIso() } : s)),
           aktivitas: log(d, `${kind === "paraf" ? "Paraf" : "TTD"} ${signer?.nama} ditandai selesai`, kind),
         };
       }),
+    updateSigners: (docId, kind, list) => update(docId, (d) => replaceSigners(d, kind, list, nowIso())),
     voidReceipt: (docId, receiptId, alasan) =>
       update(docId, (d) => {
         const rc = d.penerimaan.find((x) => x.id === receiptId);
@@ -77,19 +80,11 @@ export function DtsProvider({ children }: { children: ReactNode }) {
       return gaps;
     },
     submitReceipt: (nomor, pin, rc) => {
-      const d = docs.find((x) => x.nomor.toLowerCase() === nomor.trim().toLowerCase() && x.pin === pin.trim());
-      if (!d || d.lifecycle !== "aktif") return null;
-      const receipt: Receipt = { ...rc, id: uid(), waktu: nowIso() };
-      update(d.id, (x) => ({
-        ...x,
-        penerimaan: [...x.penerimaan, receipt],
-        aktivitas: log(
-          x,
-          `${rc.jenis === "dikembalikan" ? "Dikembalikan ke Tim RPA" : "Diterima"} oleh ${rc.nama} — ${rc.unit}, ${rc.lokasi}`,
-          "terima",
-        ),
-      }));
-      return d;
+      const d = unlockDocument(docs, nomor, pin);
+      if (!d || d.lifecycle === "batal" || Object.keys(receiptErrors(rc)).length) return null;
+      const waktu = nowIso();
+      update(d.id, (x) => appendReceipt(x, rc, waktu));
+      return appendReceipt(d, rc, waktu);
     },
   };
 
