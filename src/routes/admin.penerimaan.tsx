@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Inbox, Undo2, MapPin } from "lucide-react";
+import { Inbox, Undo2, MapPin, Phone } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { PageHeader, Panel, VoidButton } from "@/components/dts/ui";
 import { useDts } from "@/lib/dts-store";
 import { fmtDateTime } from "@/lib/dts-data";
@@ -31,7 +32,7 @@ function Receipts() {
       <PageHeader eyebrow="Riwayat" title="Penerimaan" />
       <div className="mb-5 inline-flex rounded-2xl bg-card p-1 shadow-card">
         {(["semua", "valid", "void"] as const).map((t) => (
-          <button key={t} onClick={() => setF(t)} className={cn("h-10 rounded-xl px-4 text-sm font-semibold capitalize", f === t ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>{t}</button>
+          <Button variant="ghost" key={t} onClick={() => setF(t)} className={cn("h-10 rounded-xl px-4 text-sm font-semibold capitalize", f === t ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>{t}</Button>
         ))}
       </div>
       <div className="space-y-3">
@@ -47,6 +48,8 @@ function Receipts() {
                 <p className="truncate text-sm font-medium">{d.judul}</p>
                 <p className="mt-1 text-sm"><b>{r.nama}</b> · {r.jenis === "dikembalikan" ? "Dikembalikan ke Tim RPA" : "Diterima"}</p>
                 <p className="flex items-center gap-1 text-xs opacity-80"><MapPin className="size-3 shrink-0" />{r.unit}, {r.lokasi} · {fmtDateTime(r.waktu)}</p>
+              <p className="mt-1 flex items-center gap-1 text-sm"><Phone className="size-3 shrink-0" />{r.wa}</p>
+                <p className="mt-2 break-words text-sm">{r.catatan}</p>
               </div>
               {r.void ? (
                 <span className="rounded-full bg-card px-2.5 py-1 text-xs font-bold text-destructive">VOID</span>
