@@ -1,11 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, MapPin, MessageCircle, Clock, Inbox, Undo2, User } from "lucide-react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { SignerEditor } from "@/components/dts/signer-editor";
+import { ReceiptHistory } from "@/components/dts/receipt-history";
+import { ArrowLeft, MapPin, MessageCircle, Clock, Inbox, User, Pencil } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Panel, StageBadge, SignProgress, SignStatusPill, MarkSignButton, VoidButton, CancelDocButton, FinishDocButton,
+  Panel, StageBadge, SignProgress, SignStatusPill, MarkSignButton, CancelDocButton, FinishDocButton,
 } from "@/components/dts/ui";
 import { useDts } from "@/lib/dts-store";
-import { lastPosition, fmtDate, fmtDateTime, type Doc } from "@/lib/dts-data";
+import { lastPosition, fmtDate, fmtDateTime, type Doc, type Signer } from "@/lib/dts-data";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/dokumen/$id")({
@@ -63,9 +68,9 @@ function DocDetail() {
             <Panel>
               <h2 className="mb-4 font-semibold">Informasi</h2>
               <dl className="grid grid-cols-2 gap-3 text-sm">
-                <Info k="Pemilik" v={doc.pemilik} /><Info k="Dibuat" v={fmtDate(doc.dibuat)} />
-                <Info k="Tenggat" v={fmtDate(doc.tenggat)} /><Info k="PIN" v={doc.pin} />
-                <div className="col-span-2"><Info k="Rencana perjalanan" v={doc.rute.join(" → ")} /></div>
+                <Info k="Nama tim" v={doc.pemilik} /><Info k="Dibuat" v={fmtDate(doc.dibuat)} />
+                <Info k="Tenggat" v={doc.tenggat ? fmtDate(doc.tenggat) : "—"} /><Info k="PIN" v={doc.pin} />
+                
                 {doc.alasanBatal && <div className="col-span-2"><Info k="Alasan batal" v={doc.alasanBatal} /></div>}
               </dl>
             </Panel>
@@ -83,8 +88,8 @@ function DocDetail() {
             <Panel><PositionCard doc={doc} /></Panel>
             <Panel>
               <h2 className="mb-1 font-semibold">Timeline penerimaan</h2>
-              <p className="mb-4 text-xs text-muted-foreground">Penerimaan tidak mengubah status paraf/TTD. Penerimaan void dicoret dan tidak dihitung sebagai posisi.</p>
-              <Timeline doc={doc} />
+              
+              <ReceiptHistory doc={doc} admin />
             </Panel>
           </div>
         </TabsContent>
@@ -124,6 +129,7 @@ function PositionCard({ doc }: { doc: Doc }) {
       <p className="text-xs font-semibold text-primary-hover">Posisi terakhir</p>
       <p className="mt-2 flex items-center gap-2 font-bold"><MapPin className="size-4 shrink-0 text-primary" />{pos.unit}, {pos.lokasi}</p>
       <p className="mt-1 flex items-center gap-2 text-sm"><User className="size-4 shrink-0 text-muted-foreground" />{pos.nama}</p>
+      <p className="mt-1 text-sm">{pos.wa}</p>
       <p className="mt-1 flex items-center gap-2 text-xs text-muted-foreground"><Clock className="size-4 shrink-0" />{fmtDateTime(pos.waktu)}</p>
       <a href={`https://wa.me/${wa}?text=${encodeURIComponent(`Halo ${pos.nama}, menanyakan dokumen ${doc.nomor} - ${doc.judul}.`)}`} target="_blank" rel="noreferrer"
         className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-success text-sm font-semibold text-success-foreground hover:bg-success/90">
@@ -133,38 +139,25 @@ function PositionCard({ doc }: { doc: Doc }) {
   );
 }
 
-function Timeline({ doc }: { doc: Doc }) {
-  const items = [...doc.penerimaan].sort((a, b) => b.waktu.localeCompare(a.waktu));
-  if (!items.length) return <p className="text-sm text-muted-foreground">Belum ada penerimaan.</p>;
-  return (
-    <ol className="space-y-3">
-      {items.map((r) => (
-        <li key={r.id} className={cn("rounded-2xl border p-4", r.void ? "border-destructive/30 bg-destructive-soft" : "border-border")}>
-          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
-            <div className={cn("min-w-0", r.void && "text-destructive line-through decoration-2")}>
-              <p className="flex items-center gap-1.5 text-xs font-semibold">
-                {r.jenis === "dikembalikan" ? <Undo2 className="size-3.5" /> : <Inbox className="size-3.5" />}
-                {r.jenis === "dikembalikan" ? "Dikembalikan ke Tim RPA" : "Diterima"}
-              </p>
-              <p className="font-semibold">{r.nama}</p>
-              <p className="text-sm">{r.unit}, {r.lokasi}</p>
-              <p className="text-xs opacity-80">{fmtDateTime(r.waktu)}</p>
-            </div>
-            {!r.void && doc.lifecycle === "aktif" && <VoidButton doc={doc} receiptId={r.id} name={r.nama} />}
-          </div>
-          {r.catatan && <p className="mt-2 text-xs text-muted-foreground">Catatan: {r.catatan}</p>}
-          {r.void && <p className="mt-2 text-xs font-semibold text-destructive">VOID · {r.void.alasan}</p>}
-        </li>
-      ))}
-    </ol>
-  );
-}
-
 function SignerList({ doc, kind }: { doc: Doc; kind: "paraf" | "ttd" }) {
+  const { updateSigners } = useDts();
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState<Signer[]>([]);
+  const [error, setError] = useState("");
   const list = doc[kind];
   return (
     <Panel>
-      <div className="mb-5 max-w-sm"><SignProgress list={list} label={kind === "paraf" ? "Paraf" : "TTD"} /></div>
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-4"><div className="w-full max-w-sm"><SignProgress list={list} label={kind === "paraf" ? "Paraf" : "TTD"} /></div>
+        {doc.lifecycle !== "batal" && <Button variant="outline" onClick={() => { setDraft(list.map((s) => ({ ...s }))); setError(""); setOpen(true); }}><Pencil /> Edit daftar</Button>}
+      </div>
+      <Dialog open={open} onOpenChange={setOpen}><DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+        <DialogHeader><DialogTitle>Edit daftar {kind === "paraf" ? "Paraf" : "TTD"}</DialogTitle><DialogDescription>{doc.nomor} — {doc.judul}</DialogDescription></DialogHeader>
+        <SignerEditor title={kind === "paraf" ? "Daftar Paraf" : "Daftar TTD"} list={draft} setList={setDraft} error={error} />
+        <DialogFooter><Button variant="outline" onClick={() => setOpen(false)}>Batal</Button><Button onClick={() => {
+          if (draft.some((s) => !s.nama.trim())) { setError("Lengkapi nama pihak atau hapus baris kosong."); return; }
+          updateSigners(doc.id, kind, draft); setOpen(false);
+        }}>Simpan daftar</Button></DialogFooter>
+      </DialogContent></Dialog>
       {list.length === 0 ? <p className="text-sm text-muted-foreground">Tidak diperlukan untuk dokumen ini.</p> : (
         <ul className="space-y-3">
           {list.map((s, i) => (

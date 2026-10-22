@@ -144,7 +144,7 @@ export function Field({ label, error, hint, children }: { label: string; error?:
 export function MarkSignButton({ doc, kind, signer }: { doc: Doc; kind: "paraf" | "ttd"; signer: Signer }) {
   const { markSign } = useDts();
   const [open, setOpen] = useState(false);
-  if (signer.status === "selesai" || doc.lifecycle !== "aktif") return null;
+  if (signer.status === "selesai" || doc.lifecycle === "batal") return null;
   const label = kind === "paraf" ? "Paraf" : "TTD";
   return (
     <>
@@ -301,7 +301,7 @@ export function FinishDocButton({ doc }: { doc: Doc }) {
             <>
               <DialogHeader>
                 <DialogTitle>Selesaikan dokumen {doc.nomor}?</DialogTitle>
-                <DialogDescription>Semua paraf & TTD lengkap dan dokumen sudah dikembalikan ke Tim RPA.</DialogDescription>
+                <DialogDescription>Semua paraf & TTD dalam daftar telah lengkap dan penerimaan dokumen telah tercatat.</DialogDescription>
               </DialogHeader>
               <DialogFooter className="gap-2">
                 <Button variant="outline" onClick={() => setOpen(false)}>Batal</Button>
