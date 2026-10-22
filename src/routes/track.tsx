@@ -1,130 +1,79 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { CheckCircle2, Clock, Send, XCircle, Inbox, Undo2 } from "lucide-react";
+import { CheckCircle2, Send, LockKeyhole, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Logos, Field, inputCls, DemoTag } from "@/components/dts/ui";
+import { Logos, Field, inputCls, DemoTag, SignProgress, SignStatusPill } from "@/components/dts/ui";
+import { ReceiptHistory } from "@/components/dts/receipt-history";
 import { useDts } from "@/lib/dts-store";
-import type { ReceiptKind } from "@/lib/dts-data";
+import { receiptErrors, unlockDocument, lastPosition, fmtDateTime, type ReceiptInput } from "@/lib/dts-data";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/track")({
-  head: () => ({
-    meta: [
-      { title: "Konfirmasi Penerimaan Dokumen — Tim RPA" },
-      { name: "description", content: "Konfirmasi penerimaan dokumen fisik dengan nomor tracking dan PIN." },
-      { property: "og:title", content: "Konfirmasi Penerimaan Dokumen" },
-      { property: "og:description", content: "Scan QR, isi nomor tracking & PIN, lalu konfirmasi penerimaan dokumen." },
-    ],
-  }),
-  component: TrackPage,
+  validateSearch: (search: Record<string, unknown>): { doc?: string | undefined } => ({ doc: typeof search.doc === "string" ? search.doc : undefined }),
+  head: () => ({ meta: [
+    { title: "Tracking Dokumen — Tim RPA" },
+    { name: "description", content: "Akses dokumen dengan PIN, catat perjalanan fisik dan lihat progres paraf serta TTD terpisah." },
+    { property: "og:title", content: "Tracking Dokumen — Tim RPA" },
+    { property: "og:description", content: "Riwayat penerimaan lengkap dan progres paraf serta TTD dokumen." },
+    { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" },
+  ] }), component: TrackPage,
 });
-
-const empty = { nomor: "", pin: "", nama: "", wa: "", unit: "", lokasi: "", jenis: "diterima" as ReceiptKind, catatan: "" };
-
+const empty: ReceiptInput = { nama: "", wa: "", unit: "", lokasi: "", jenis: "diterima", catatan: "" };
 function TrackPage() {
-  const { submitReceipt } = useDts();
-  const [f, setF] = useState(empty);
-  const [errs, setErrs] = useState<Partial<Record<keyof typeof empty, string>>>({});
-  const [state, setState] = useState<{ kind: "form" } | { kind: "ok"; judul: string } | { kind: "err" }>({ kind: "form" });
-  const set = (k: keyof typeof empty, v: string) => setF((p) => ({ ...p, [k]: v }));
-
-  const submit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const n: Partial<Record<keyof typeof empty, string>> = {};
-    if (!f.nomor.trim()) n.nomor = "Nomor tracking wajib diisi.";
-    if (!/^\d{4,6}$/.test(f.pin)) n.pin = "PIN berupa 4–6 digit angka.";
-    if (!f.nama.trim()) n.nama = "Nama wajib diisi.";
-    if (!/^(08|62)\d{8,12}$/.test(f.wa.replace(/\D/g, ""))) n.wa = "Nomor WA tidak valid (contoh 081234567890).";
-    if (!f.unit.trim()) n.unit = "Unit wajib diisi.";
-    if (!f.lokasi.trim()) n.lokasi = "Lokasi wajib diisi.";
-    setErrs(n);
-    if (Object.keys(n).length) return;
-    const doc = submitReceipt(f.nomor, f.pin, {
-      nama: f.nama.trim(), wa: f.wa.replace(/\D/g, ""), unit: f.unit.trim(), lokasi: f.lokasi.trim(), jenis: f.jenis, catatan: f.catatan.trim() || undefined,
-    });
-    setState(doc ? { kind: "ok", judul: doc.judul } : { kind: "err" });
-  };
-
-  return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur">
-        <div className="mx-auto flex max-w-lg items-center justify-between px-4 py-3">
-          <Logos size="sm" />
-          <DemoTag />
+  const search = Route.useSearch();
+  const { docs, submitReceipt } = useDts();
+  const [nomor, setNomor] = useState(search.doc ?? "");
+  const [pin, setPin] = useState("");
+  const [access, setAccess] = useState<{ id: string; pin: string } | null>(null);
+  const [accessError, setAccessError] = useState("");
+  const [f, setF] = useState<ReceiptInput>(empty);
+  const [errors, setErrors] = useState<ReturnType<typeof receiptErrors>>({});
+  const [success, setSuccess] = useState(false);
+  const doc = access ? docs.find((d) => d.id === access.id) : undefined;
+  const set = (key: keyof ReceiptInput, value: string) => { setF((prev) => ({ ...prev, [key]: value })); setSuccess(false); };
+  const pos = doc ? lastPosition(doc) : undefined;
+  return <div className="min-h-screen bg-background">
+    <header className="border-b border-border bg-card"><div className="mx-auto flex max-w-3xl items-center justify-between gap-2 px-4 py-4"><Logos size="sm" /><DemoTag /></div></header>
+    <main className="mx-auto max-w-3xl px-4 py-6">
+      {!doc ? <div className="mx-auto max-w-md">
+        <div className="mb-6"><LockKeyhole className="mb-3 size-8 text-primary" /><p className="text-xs text-muted-foreground">Document Tracking System</p><h1 className="mt-1 text-2xl font-bold text-primary-hover">Akses Dokumen</h1></div>
+        <form className="space-y-4" noValidate onSubmit={(e) => {
+          e.preventDefault(); const found = unlockDocument(docs, nomor, pin);
+          if (!found) { setAccessError("Nomor tracking atau PIN tidak sesuai."); return; }
+          setAccess({ id: found.id, pin }); setAccessError("");
+        }}>
+          <Field label="Nomor tracking"><input className={inputCls} readOnly={!!search.doc} value={nomor} onChange={(e) => setNomor(e.target.value.toUpperCase())} /></Field>
+          <Field label="PIN"><input className={inputCls} type="password" inputMode="numeric" maxLength={6} value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))} /></Field>
+          {accessError && <p role="alert" className="text-sm text-destructive">{accessError}</p>}
+          <Button type="submit" className="w-full"><LockKeyhole /> Buka dokumen</Button>
+        </form>
+      </div> : <>
+        <div className="mb-6 border-b border-border pb-5"><p className="text-xs font-semibold text-primary">{doc.nomor} · {doc.pemilik}</p><h1 className="mt-1 break-words text-2xl font-bold">{doc.judul}</h1>
+          <div className="mt-4 flex items-start gap-2 text-sm"><MapPin className="size-5 shrink-0 text-primary" /><div><p className="font-semibold">{pos ? `${pos.unit} · ${pos.lokasi}` : "Belum ada penerimaan"}</p>{pos && <p className="text-xs text-muted-foreground">{pos.nama} · {fmtDateTime(pos.waktu)}</p>}</div></div>
         </div>
-      </header>
-
-      <main className="mx-auto max-w-lg px-4 pb-32 pt-5">
-        <div className="relative mb-5 overflow-hidden rounded-3xl bg-hero p-5 text-primary-foreground shadow-soft">
-          <div className="absolute -right-10 -top-10 size-36 rounded-full glass" />
-          <p className="relative text-xs font-medium opacity-85">Document Tracking System</p>
-          <h1 className="relative mt-1 text-xl font-bold">Konfirmasi Penerimaan Dokumen</h1>
-          <p className="relative mt-1 text-sm opacity-90">Isi data di bawah sesuai label pada dokumen.</p>
-        </div>
-
-        {state.kind === "ok" ? (
-          <div className="rounded-3xl bg-card p-6 text-center shadow-card">
-            <div className="mx-auto grid size-16 place-items-center rounded-2xl bg-success-soft text-success"><CheckCircle2 className="size-8" /></div>
-            <h2 className="mt-4 text-lg font-bold">Konfirmasi berhasil dikirim</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Terima kasih. Penerimaan untuk dokumen berikut telah tercatat:</p>
-            <p className="mt-3 rounded-xl bg-primary-soft px-4 py-3 text-sm font-semibold text-primary-hover">{state.judul}</p>
-            <Button className="mt-6 w-full" onClick={() => { setF(empty); setState({ kind: "form" }); }}>Kirim konfirmasi lain</Button>
-          </div>
-        ) : (
-          <form id="track-form" onSubmit={submit} noValidate className="space-y-4 rounded-3xl bg-card p-5 shadow-card">
-            {state.kind === "err" && (
-              <div className="flex items-start gap-2 rounded-xl bg-destructive-soft px-3 py-3 text-sm font-medium text-destructive">
-                <XCircle className="mt-0.5 size-4 shrink-0" /> Nomor tracking atau PIN tidak sesuai.
-              </div>
-            )}
-            <div className="grid grid-cols-[minmax(0,1fr)_110px] gap-3">
-              <Field label="Nomor tracking" error={errs.nomor}>
-                <input className={inputCls} value={f.nomor} onChange={(e) => set("nomor", e.target.value.toUpperCase())} placeholder="RPA-2026-001" />
-              </Field>
-              <Field label="PIN" error={errs.pin}>
-                <input className={inputCls} inputMode="numeric" maxLength={6} value={f.pin} onChange={(e) => set("pin", e.target.value.replace(/\D/g, ""))} placeholder="••••" />
-              </Field>
-            </div>
-            <Field label="Nama lengkap" error={errs.nama}><input className={inputCls} value={f.nama} onChange={(e) => set("nama", e.target.value)} /></Field>
-            <Field label="Nomor WhatsApp" error={errs.wa}><input className={inputCls} inputMode="tel" value={f.wa} onChange={(e) => set("wa", e.target.value)} placeholder="081234567890" /></Field>
+        <div className="mb-6 grid gap-5 sm:grid-cols-2">{(["paraf", "ttd"] as const).map((kind) => <section key={kind} className="min-w-0 space-y-3"><SignProgress list={doc[kind]} label={kind === "paraf" ? "Paraf" : "TTD"} /><ul className="space-y-2">{doc[kind].map((s) => <li key={s.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2 text-sm"><span className="min-w-0 break-words">{s.nama}</span><SignStatusPill s={s} /></li>)}</ul></section>)}</div>
+        <section className="border-t border-border pt-5"><h2 className="mb-4 text-lg font-semibold">Update Penerimaan Dokumen</h2>
+          {doc.lifecycle === "batal" ? <p className="text-sm text-destructive">Dokumen dibatalkan.</p> : <form className="space-y-4" noValidate onSubmit={(e) => {
+            e.preventDefault(); const errors = receiptErrors(f); setErrors(errors); if (Object.keys(errors).length || !access) return;
+            const result = submitReceipt(doc.nomor, access.pin, { ...f, nama: f.nama.trim(), wa: f.wa.trim(), unit: f.unit.trim(), lokasi: f.lokasi.trim(), catatan: f.catatan.trim() });
+            if (!result) { setAccessError("Penerimaan belum tercatat. Periksa akses dokumen."); return; }
+            setF(empty); setSuccess(true); setAccessError("");
+          }}>
+            {success && <p role="status" className="flex items-center gap-2 rounded-xl bg-success-soft p-3 text-sm font-medium text-success"><CheckCircle2 className="size-5 shrink-0" />Penerimaan berhasil dicatat.</p>}
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Unit / Bagian" error={errs.unit}><input className={inputCls} value={f.unit} onChange={(e) => set("unit", e.target.value)} placeholder="Sekretaris Tim A" /></Field>
-              <Field label="Lokasi" error={errs.lokasi}><input className={inputCls} value={f.lokasi} onChange={(e) => set("lokasi", e.target.value)} placeholder="Lantai 3" /></Field>
+              <Field label="Nama penerima" error={errors.nama}><input className={inputCls} value={f.nama} onChange={(e) => set("nama", e.target.value)} /></Field>
+              <Field label="Nomor telepon" error={errors.wa}><input className={inputCls} type="tel" value={f.wa} onChange={(e) => set("wa", e.target.value)} /></Field>
+              <Field label="Nama tim penerima" error={errors.unit}><input className={inputCls} value={f.unit} onChange={(e) => set("unit", e.target.value)} /></Field>
+              <Field label="Lokasi penerimaan" error={errors.lokasi}><input className={inputCls} placeholder="Gedung BRI, lantai 3" value={f.lokasi} onChange={(e) => set("lokasi", e.target.value)} /></Field>
             </div>
-            <div>
-              <span className="mb-1.5 block text-sm font-medium">Jenis penerimaan</span>
-              <div className="grid grid-cols-2 gap-2">
-                {([
-                  { v: "diterima", l: "Diterima", i: Inbox },
-                  { v: "dikembalikan", l: "Dikembalikan ke Tim RPA", i: Undo2 },
-                ] as const).map(({ v, l, i: I }) => (
-                  <button type="button" key={v} onClick={() => set("jenis", v)} aria-pressed={f.jenis === v}
-                    className={cn("flex min-h-14 items-center gap-2 rounded-xl border px-3 py-2 text-left text-sm font-medium transition",
-                      f.jenis === v ? "border-primary bg-primary-soft text-primary-hover" : "border-border bg-card")}>
-                    <I className="size-4 shrink-0" /> {l}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <Field label="Catatan (opsional)"><textarea className={cn(inputCls, "h-20 py-2.5")} value={f.catatan} onChange={(e) => set("catatan", e.target.value)} /></Field>
-            <p className="flex items-center gap-2 rounded-xl bg-info-soft px-3 py-2.5 text-xs font-medium text-primary-hover">
-              <Clock className="size-4 shrink-0" /> Waktu dicatat otomatis oleh sistem.
-            </p>
-            <p className="text-center text-xs text-muted-foreground">Contoh untuk dicoba: RPA-2026-001 · PIN 4821</p>
-          </form>
-        )}
-        <p className="mt-6 text-center text-xs text-muted-foreground">
-          Admin? <Link to="/" className="font-semibold text-primary">Masuk di sini</Link>
-        </p>
-      </main>
-
-      {state.kind !== "ok" && (
-        <div className="fixed inset-x-0 bottom-0 border-t border-border bg-card/95 p-4 backdrop-blur">
-          <div className="mx-auto max-w-lg">
-            <Button type="submit" form="track-form" size="lg" className="w-full"><Send /> Kirim konfirmasi</Button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+            <Field label="Deskripsi / keterangan penerimaan" error={errors.catatan}><textarea className={cn(inputCls, "h-24 py-3")} value={f.catatan} onChange={(e) => set("catatan", e.target.value)} /></Field>
+            {accessError && <p role="alert" className="text-sm text-destructive">{accessError}</p>}
+            <Button type="submit"><Send /> Simpan penerimaan</Button>
+          </form>}
+        </section>
+        <section className="mt-8 border-t border-border pt-5"><h2 className="mb-4 text-lg font-semibold">Riwayat Perjalanan ({doc.penerimaan.length})</h2><ReceiptHistory doc={doc} /></section>
+      </>}
+      <p className="mt-8 text-center text-xs text-muted-foreground"><Link to="/" className="font-semibold text-primary">Masuk Admin</Link></p>
+    </main>
+  </div>;
 }
